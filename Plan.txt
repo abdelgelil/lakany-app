@@ -1,0 +1,27 @@
+management
+1. sign up / login ---> max 3 users
+2. show all patients appointment with status (finished , upcoming ) with Date and time
+3. after each appointment should reccord the fees in a note and update the Doctor's finaince page
+4. cancel the appointment based on patient need or the Doctor's Order
+5. add new patient called by phone / new account ----> phone , name , password
+6. optional Note / flag on any patient didn't show update patient end and the doctor's end
+
+Doctor
+1. login/signup (only one user)
+2. show the upcoming appointments for today
+3. search by name or phone to see a specific any appointment with its status
+4. patient note / patient medical reccord 
+5. finaince page (each appointment rev , monthly yearly filter total)
+6. patient account on a separate page ---> name , past reccords , current appointment
+7. patient Note -----> advice , perscription , required docs
+8. Terminate
+
+Patient 
+1. signup / login ----> phone /email , password langauge 
+2. reserve a appointment with a calender shows the availablity 
+3. show upcoming appointments
+4. on a separate page each appointment contains ----> perscription , patient info , required docs , medical advice
+5. cancel appointment / contact clinic 
+6. choose desired language arabic / english  ----> always on header
+7. show location , clinic number , personal branding (Dr's logo , photos , etc)
+8. logout
