@@ -1,0 +1,12 @@
+{
+  "name": "lakany-clinic-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install-backend": "cd backend && npm install",
+    "install-frontend": "cd frontend && npm install",
+    "build-frontend": "cd frontend && npm run build",
+    "install-all": "npm run install-backend && npm run install-frontend",
+    "start": "node backend/server.js"
+  }
+}
