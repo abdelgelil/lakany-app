@@ -14,7 +14,7 @@ import PatientDashboardLayout from './patient/DashboardLayout'; // Renamed for c
 import PatientAuth from './patient/PatientAuth';
 import ProtectedRoute from './patient/ProtectedRoute'; 
 import RoleProtectedRoute from './components/ProtectedRoute'; 
-import ManagementAuth from './management/ManagementAuth';
+import ManagementAuth from './Management/ManagementAuth';
 import DoctorAuth from './Doctor/DoctorAuth';
 
 // --- PUBLIC PAGES ---
@@ -39,11 +39,11 @@ import PatientRecordDetail from './Doctor/PatientRecordDetail';
 import DoctorProfile from './Doctor/DoctorProfile';
 
 // --- MANAGEMENT PAGES ---
-import ManagementDashboard from './management/ManagementDashboard';
-import Collection from './management/Collection';
-import Finance from './management/Finance';
-import ManagementPatientsPage from './management/ManagementPatientsPage';
-import ManagementLayout from './management/ManagementLayout';
+import ManagementDashboard from './Management/ManagementDashboard';
+import Collection from './Management/Collection';
+import Finance from './Management/Finance';
+import ManagementPatientsPage from './Management/ManagementPatientsPage';
+import ManagementLayout from './Management/ManagementLayout';
 
 function App() {
   return (
