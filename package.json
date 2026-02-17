@@ -7,6 +7,6 @@
     "install-frontend": "cd lakany-clinic-frontend && npm install",
     "build-frontend": "cd lakany-clinic-frontend && npm run build",
     "install-all": "npm run install-backend && npm run install-frontend",
-    "start": "node backend/server.js"
+    "start": "cd backend && node server.js"
   }
 }
