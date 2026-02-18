@@ -8,10 +8,8 @@ import axios from 'axios';
  * https://lakany-app-production.up.railway.app/api
  */
 const api = axios.create({
-    baseURL: '/api', 
-    headers: {
-        'Content-Type': 'application/json'
-    }
+  baseURL: '/api', 
+    headers: { 'Content-Type': 'application/json' }
 });
 
 // Add a request interceptor to attach tokens automatically
