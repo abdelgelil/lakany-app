@@ -56,8 +56,8 @@ const ForgotPassword = () => {
              * We use /users/forgot-password (kebab-case) as it is the 
              * standard for most backend route definitions.
              */
-            await api.post('/users/forgot-password', { email });
-            
+           await api.post('/patient/forgotPassword', { email });
+           
             toast.success(t.success, { id: toastId });
             setEmail('');
         } catch (err) {
