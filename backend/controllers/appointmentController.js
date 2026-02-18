@@ -1,4 +1,5 @@
 const Appointment = require('../models/Appointment');
+const User = require('../models/User'); // Import User to check persistent availability
 
 // @desc    Get all appointments for Management
 exports.getAllAppointments = async (req, res) => {
@@ -26,16 +27,28 @@ exports.getAvailableSlots = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Date and Doctor ID are required.' });
         }
 
-        // 1. Determine Clinic Schedule (Defaulting to 10-16 if unknown, but matching specific clinics)
+        // --- PERSISTENT STATUS CHECK ---
+        const doctor = await User.findById(doctorId);
+        if (doctor && doctor.isAvailable === false) {
+            return res.status(200).json({ 
+                success: true, 
+                data: [], // UI will show no slots available
+                message: 'Clinic is currently closed for bookings by the doctor.' 
+            });
+        }
+
+        // ... rest of your slot generation logic (startHour, endHour, etc.)
+
+        // 1. Determine Clinic Schedule
         let startHour = 10;
         let endHour = 16;
 
         if (clinicName === 'Janaklees Clinic') {
-            startHour = 18; // 6 PM
-            endHour = 22;   // 10 PM
+            startHour = 18; 
+            endHour = 22;   
         } else if (clinicName === 'Mahatet al Raml Clinic') {
-            startHour = 13; // 1 PM
-            endHour = 14;   // 2 PM
+            startHour = 13; 
+            endHour = 14;   
         }
 
         // 2. Generate Master List of Slots (30 min intervals)
@@ -56,13 +69,12 @@ exports.getAvailableSlots = async (req, res) => {
             status: { $ne: 'cancelled' }
         });
 
-        // 4. Map Booked Times (Converting DB time to HH:mm string)
-        // Note: Assuming server/DB handles timezone correctly or using 'Africa/Cairo' for Egypt clinics
+        // 4. Map Booked Times (Egypt Timezone)
         const bookedTimes = existingAppointments.map(app => {
             return app.date.toLocaleTimeString('en-GB', { 
                 hour: '2-digit', 
                 minute: '2-digit',
-                timeZone: 'Africa/Cairo' // Force Egypt time for accuracy
+                timeZone: 'Africa/Cairo' 
             });
         });
 
@@ -86,11 +98,10 @@ exports.getAvailableSlots = async (req, res) => {
 // @desc    Get all appointments for a specific doctor
 exports.getDoctorSchedule = async (req, res) => {
     try {
-        // The doctor's ID is attached to the request by the 'protect' middleware
         const doctorId = req.user.id;
 
         if (!doctorId) {
-            return res.status(400).json({ success: false, message: 'Doctor ID not found. You may not be logged in correctly.' });
+            return res.status(400).json({ success: false, message: 'Doctor ID not found.' });
         }
 
         const appointments = await Appointment.find({ doctorId: doctorId })
@@ -112,7 +123,7 @@ exports.getMyAppointments = async (req, res) => {
     try {
         const patientId = req.user.id;
         const appointments = await Appointment.find({ patientId: patientId })
-            .populate('doctorId', 'username') // Get doctor's name
+            .populate('doctorId', 'username')
             .sort('-date');
 
         res.status(200).json({
@@ -134,14 +145,12 @@ exports.cancelAppointment = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Appointment not found.' });
         }
 
-        // Security Check: Ensure the person cancelling is the patient who booked it
         if (appointment.patientId.toString() !== req.user.id) {
-            return res.status(403).json({ success: false, message: 'You are not authorized to cancel this appointment.' });
+            return res.status(403).json({ success: false, message: 'Unauthorized.' });
         }
 
-        // Prevent cancellation of past or already completed appointments
         if (['completed', 'done', 'cancelled'].includes(appointment.status)) {
-            return res.status(400).json({ success: false, message: `Cannot cancel an appointment that is already ${appointment.status}.` });
+            return res.status(400).json({ success: false, message: `Cannot cancel ${appointment.status} appointment.` });
         }
 
         appointment.status = 'cancelled';
@@ -153,20 +162,24 @@ exports.cancelAppointment = async (req, res) => {
     }
 };
 
-
 // @desc    Create new appointment
 exports.createAppointment = async (req, res) => {
     try {
-        // 1. Get the patient ID from the 'protect' middleware (req.user)
         const patientId = req.user.id; 
+        const { doctorId } = req.body;
 
-        // 2. Add it to the body before creating
-        const appointmentData = {
-            ...req.body,
-            patientId: patientId
-        };
+        // --- HARD BLOCK ---
+        const doctor = await User.findById(doctorId);
+        if (doctor && doctor.isAvailable === false) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Booking failed: The clinic is currently closed and not accepting new appointments.' 
+            });
+        }
 
+        const appointmentData = { ...req.body, patientId };
         const newAppointment = await Appointment.create(appointmentData);
+        
         res.status(201).json({ success: true, data: newAppointment });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
@@ -188,9 +201,8 @@ exports.getAppointment = async (req, res) => {
         const isPatientOwner = user.role === 'patient' && appointment.patientId._id.toString() === user.id;
         const isStaff = ['doctor', 'management', 'admin'].includes(user.role);
 
-        // A patient can only see their own records. Staff (doctor, admin, etc.) can see any.
         if (!isPatientOwner && !isStaff) {
-            return res.status(403).json({ success: false, message: 'You are not authorized to view this record.' });
+            return res.status(403).json({ success: false, message: 'Unauthorized access.' });
         }
         
         res.status(200).json({ success: true, data: appointment });
@@ -224,7 +236,7 @@ exports.handleNoShow = async (req, res) => {
         );
 
         if (!appointment) {
-            return res.status(404).json({ success: false, message: 'No appointment found with that ID' });
+            return res.status(404).json({ success: false, message: 'ID not found.' });
         }
 
         res.status(200).json({ success: true, data: appointment });
@@ -233,7 +245,7 @@ exports.handleNoShow = async (req, res) => {
     }
 };
 
-// @desc    Update appointment details (Status, Date, etc.)
+// @desc    Update appointment details
 exports.updateAppointment = async (req, res) => {
     try {
         const appointment = await Appointment.findByIdAndUpdate(req.params.id, req.body, {
@@ -242,7 +254,7 @@ exports.updateAppointment = async (req, res) => {
         });
 
         if (!appointment) {
-            return res.status(404).json({ success: false, message: 'No appointment found with that ID' });
+            return res.status(404).json({ success: false, message: 'ID not found.' });
         }
 
         res.status(200).json({ success: true, data: appointment });
@@ -253,9 +265,16 @@ exports.updateAppointment = async (req, res) => {
 
 // @desc    Get public clinic status
 exports.getClinicStatus = async (req, res) => {
-    res.status(200).json({
-        success: true,
-        status: 'open',
-        message: 'Clinic is operational'
-    });
+    try {
+        // Find the main doctor to report general status
+        const doctor = await User.findOne({ role: 'doctor' });
+        
+        res.status(200).json({
+            success: true,
+            status: doctor?.isAvailable ? 'open' : 'closed',
+            message: doctor?.isAvailable ? 'Clinic is operational' : 'Clinic is currently closed'
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 };

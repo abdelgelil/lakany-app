@@ -35,6 +35,10 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    isClinicOpen: {
+        type: Boolean,
+        default: true
+    },
     language: {
         type: String,
         default: 'en'
