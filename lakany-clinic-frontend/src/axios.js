@@ -1,28 +1,48 @@
 import axios from 'axios';
 
-// Determine the base URL. For development with proxy, it's just '/api'.
-// For production, it's the full URL from the environment variable.
-const baseURL = process.env.NODE_ENV === 'production' 
-    ? import.meta.env.VITE_API_URL 
-    : '/api';
-
+/**
+ * PRODUCTION TIP: 
+ * Since our Express backend is serving the React dist folder, 
+ * the frontend and backend share the same domain. 
+ * Using '/api' as the baseURL will automatically point to:
+ * https://lakany-app-production.up.railway.app/api
+ */
 const api = axios.create({
-    baseURL: baseURL,
+    baseURL: '/api', 
     headers: {
         'Content-Type': 'application/json'
     }
 });
 
-// Add a request interceptor to attach the correct token automatically
+// Add a request interceptor to attach tokens automatically
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token') || localStorage.getItem('doctor_token') || localStorage.getItem('management_token');
+        // Try to get tokens for any of the three roles
+        const token = 
+            localStorage.getItem('token') || 
+            localStorage.getItem('doctor_token') || 
+            localStorage.getItem('management_token');
+
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Optional: Add a response interceptor to handle global errors (like 401 Unauthorized)
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            console.warn("Unauthorized! Redirecting to login...");
+            // Optional: localStorage.clear(); window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
 );
 
 export default api;
