@@ -13,9 +13,13 @@ const app = express();
 
 // --- GLOBAL MIDDLEWARES ---
 
-// Allow Frontend access and Authorization headers
+// FIX: Updated CORS to allow your Railway domain
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    origin: [
+        'http://localhost:5173', 
+        'http://localhost:3000', 
+        'https://lakany-app-production.up.railway.app' // Add your live URL
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -33,12 +37,8 @@ app.use('/api/enterprise', enterpriseRouter);
 app.use('/api/patient', patientRouter);
 app.use('/api/admin', adminRouter);
 
-// Catch-all 404
-app.all('*', (req, res, next) => {
-    const err = new Error(`Route ${req.originalUrl} not found`);
-    err.statusCode = 404;
-    next(err);
-});
+// IMPORTANT: Removed the app.all('*') 404 block from here. 
+// If we leave it here, it will block the frontend files in server.js.
 
 // Final Error Handling Middleware
 app.use((err, req, res, next) => {

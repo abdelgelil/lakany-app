@@ -25,27 +25,29 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'Backend is healthy' });
 });
 
-// --- 4. SERVE FRONTEND (The missing link for Railway) ---
-
-// This points to the 'dist' folder created by 'npm run build' inside your frontend folder
+// --- 4. SERVE FRONTEND ---
 const frontendBuildPath = path.join(__dirname, '../lakany-clinic-frontend/dist');
-
-// Tell Express to serve the static files (CSS, JS, Images)
 app.use(express.static(frontendBuildPath));
 
-// Handle React Routing: Send index.html for any request that isn't an API call
 app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendBuildPath, 'index.html'));
+    // Adding a check: if the file doesn't exist, it helps with debugging
+    res.sendFile(path.join(frontendBuildPath, 'index.html'), (err) => {
+        if (err) {
+            res.status(500).send("Frontend build files missing in " + frontendBuildPath);
+        }
+    });
 });
 
 // -------------------------------------------------------
 
-// 5. Start Server
+// 5. Start Server (UPDATED FOR RAILWAY)
 const PORT = process.env.PORT || 5000;
-const server = app.listen(
-    PORT,
-    () => console.log(`✅ Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`)
-);
+
+// We add '0.0.0.0' to ensure the server is accessible externally
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`📂 Serving frontend from: ${frontendBuildPath}`);
+});
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
