@@ -1,7 +1,11 @@
 import axios from 'axios';
 
 const mgmtApi = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  // CHANGE THIS:
+  // baseURL: 'http://localhost:5000/api',
+
+  // TO THIS:
+  baseURL: '/api', 
 });
 
 mgmtApi.interceptors.request.use(

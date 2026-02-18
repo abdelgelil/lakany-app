@@ -1,7 +1,11 @@
 import axios from 'axios';
 
 const doctorApi = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  // CHANGE THIS:
+  // baseURL: 'http://localhost:5000/api',
+
+  // TO THIS:
+  baseURL: '/api', 
 });
 
 doctorApi.interceptors.request.use(
