@@ -51,21 +51,23 @@ const DoctorProfile = () => {
 
   // --- 1. Fetch REAL status from Database ---
   useEffect(() => {
-    const syncStatus = async () => {
-      try {
-        const response = await getDoctorProfile();
-        // Fallback to true if isAvailable isn't set yet
-        const status = response?.data?.isAvailable ?? true;
-        setIsDoctorAvailable(status);
-      } catch (error) {
-        console.error("Sync Error:", error);
-        setIsDoctorAvailable(true); // Fail-safe to Open
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    syncStatus();
-  }, []);
+  const syncStatus = async () => {
+    try {
+      // 'response' here is actually the data object returned by your .then() above
+      const response = await getDoctorProfile(); 
+      
+      // Access isAvailable directly from the object
+      const status = response?.isAvailable ?? true; 
+      setIsDoctorAvailable(status);
+    } catch (error) {
+      console.error("Sync Error:", error);
+      setIsDoctorAvailable(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  syncStatus();
+}, []);
 
   // --- 2. Manual Update ---
   const handleToggle = async (target) => {
