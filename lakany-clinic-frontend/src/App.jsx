@@ -8,13 +8,12 @@ import { AvailabilityProvider } from './context/AvailabilityContext';
 
 // --- LAYOUTS ---
 import MainLayout from './patient/MainLayout';
-import PatientDashboardLayout from './patient/DashboardLayout'; // Renamed for clarity
+import PatientDashboardLayout from './patient/DashboardLayout'; 
 
 // --- AUTH & PROTECTION ---
 import PatientAuth from './patient/PatientAuth';
-import ProtectedRoute from './patient/ProtectedRoute'; 
 import RoleProtectedRoute from './components/ProtectedRoute'; 
-import ManagementAuth from './management/ManagementAuth';
+import ManagementAuth from './Management/ManagementAuth';
 import DoctorAuth from './Doctor/DoctorAuth';
 
 // --- PUBLIC PAGES ---
@@ -39,11 +38,11 @@ import PatientRecordDetail from './Doctor/PatientRecordDetail';
 import DoctorProfile from './Doctor/DoctorProfile';
 
 // --- MANAGEMENT PAGES ---
-import ManagementDashboard from './management/ManagementDashboard';
-import Collection from './management/Collection';
-import Finance from './management/Finance';
-import ManagementPatientsPage from './management/ManagementPatientsPage';
-import ManagementLayout from './management/ManagementLayout';
+import ManagementDashboard from './Management/ManagementDashboard';
+import Collection from './Management/Collection';
+import Finance from './Management/Finance';
+import ManagementPatientsPage from './Management/ManagementPatientsPage';
+import ManagementLayout from './Management/ManagementLayout';
 
 function App() {
   return (
@@ -55,7 +54,9 @@ function App() {
                 1. ROOT, PUBLIC & AUTH ROUTES
                ========================================= */}
             <Route path="/" element={<WelcomePage />} />
-            <Route path="/about" element={<MainLayout><About /></MainLayout>} />
+            <Route element={<MainLayout />}>
+              <Route path="/about" element={<About />} />
+            </Route>
             
             {/* Login Pages */}
             <Route path="/login" element={<PatientAuth />} />
@@ -69,16 +70,15 @@ function App() {
             {/* =========================================
                 2. PATIENT PORTAL
                ========================================= */}
-            {/* Patient routes are now nested under /patient and protected by role */}
             <Route 
               path="/patient"
-              element={ // Using RoleProtectedRoute for strict role checking
+              element={
                 <RoleProtectedRoute allowedRoles={['patient']}>
                   <PatientDashboardLayout />
                 </RoleProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/patient/dashboard" replace />} />
+              <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<PatientDashboard />} />
               <Route path="book" element={<BookAppointment />} />
               <Route path="records" element={<MedicalRecords />} />
@@ -89,7 +89,10 @@ function App() {
             {/* =========================================
                 3. DOCTOR PORTAL
                ========================================= */}
-            <Route path="/doctor" element={<RoleProtectedRoute allowedRoles={['doctor']} />}>
+            <Route 
+              path="/doctor" 
+              element={<RoleProtectedRoute allowedRoles={['doctor']} />}
+            >
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<DoctorDashboard />} />
               <Route path="record/:id" element={<PatientAccount />} />
@@ -101,9 +104,12 @@ function App() {
             </Route>
             
             {/* =========================================
-                4. MANAGEMENT PORTAL
+                4. MANAGEMENT PORTAL (Unified to /admin)
                ========================================= */}
-            <Route path="/admin" element={<RoleProtectedRoute allowedRoles={['management', 'admin']} />}>
+            <Route 
+              path="/admin" 
+              element={<RoleProtectedRoute allowedRoles={['management', 'admin']} />}
+            >
               <Route element={<ManagementLayout />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<ManagementDashboard />} />
@@ -114,18 +120,34 @@ function App() {
             </Route>
 
             {/* =========================================
-                5. FALLBACKS
+                5. FALLBACKS & REDIRECTS
                ========================================= */}
-            {/* Redirect old /dashboard URLs to the new /patient path for bookmarks */}
+            {/* Redirect /management to /admin to avoid confusion */}
+            <Route path="/management" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/management/*" element={<Navigate to="/admin/dashboard" replace />} />
+
+            {/* Legacy Dashboard Redirects */}
             <Route path="/dashboard" element={<Navigate to="/patient/dashboard" replace />} />
             <Route path="/dashboard/*" element={<Navigate to="/patient/dashboard" replace />} />
-            <Route path="/management/*" element={<Navigate to="/admin/dashboard" replace />} />
+            
+            {/* 404 Redirect to Home */}
             <Route path="/welcome" element={<Navigate to="/" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
         
-        <Toaster position="top-center" reverseOrder={false} />
+        <Toaster 
+            position="top-center" 
+            reverseOrder={false} 
+            toastOptions={{
+                duration: 5000,
+                style: {
+                    borderRadius: '12px',
+                    background: '#333',
+                    color: '#fff',
+                },
+            }}
+        />
       </LanguageProvider>
     </AvailabilityProvider>
   );

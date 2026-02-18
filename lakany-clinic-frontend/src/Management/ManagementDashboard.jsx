@@ -19,8 +19,6 @@ const ManagementDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('Upcoming');
-  
-  // Modal State for Billing
   const [billingModal, setBillingModal] = useState({ isOpen: false, id: null, fee: "500" });
 
   const fetchAppointments = async () => {
@@ -30,8 +28,7 @@ const ManagementDashboard = () => {
       setAppointments(response.data.data || []);
       setError(null);
     } catch (err) {
-      const status = err.response?.status;
-      const msg = status === 403 ? "Forbidden: Admin Access Required" : "Failed to sync with server";
+      const msg = err.response?.status === 403 ? "Forbidden: Admin Access Required" : "Failed to sync with server";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -43,14 +40,11 @@ const ManagementDashboard = () => {
     fetchAppointments();
   }, []);
 
-  // --- Handlers ---
-
   const openBillingModal = (id) => setBillingModal({ isOpen: true, id, fee: "500" });
 
   const submitBilling = async () => {
     const { id, fee } = billingModal;
     if (!fee || isNaN(fee)) return toast.error("Please enter a valid amount");
-
     const toastId = toast.loading("Processing payment...");
     try {
       await finalizeAppointment(id, Number(fee));
@@ -88,8 +82,6 @@ const ManagementDashboard = () => {
     ), { position: 'top-center', duration: 5000 });
   };
 
-  // --- Logic ---
-
   const filteredAppointments = useMemo(() => {
     const groups = {
       Upcoming: ['pending', 'confirmed', 'upcoming'],
@@ -114,18 +106,18 @@ const ManagementDashboard = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="min-h-screen bg-[#FDFDFF] p-6 font-sans text-slate-900">
+    <div className="min-h-screen bg-[#FDFDFF] p-4 md:p-6 font-sans text-slate-900">
       <Toaster position="top-right" />
       
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-10 flex justify-between items-end">
+      {/* Header - Stacked on mobile */}
+      <div className="max-w-7xl mx-auto mb-6 md:mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-slate-900">Management</h1>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900">Management</h1>
           <p className="text-slate-500 font-medium">Clinic Operations & Billing</p>
         </div>
         <button 
           onClick={fetchAppointments} 
-          className="p-3 bg-white border border-slate-200 rounded-2xl shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2 font-bold text-slate-700"
+          className="w-full md:w-auto p-3 bg-white border border-slate-200 rounded-2xl shadow-sm hover:bg-slate-50 transition-all flex items-center justify-center gap-2 font-bold text-slate-700"
         >
           <RefreshCcw size={18} className={loading ? "animate-spin" : ""} />
           Refresh
@@ -133,24 +125,78 @@ const ManagementDashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto">
-        {/* Tabs */}
-        <div className="flex gap-2 bg-slate-100/50 p-1.5 rounded-2xl w-fit mb-8 border border-slate-100">
-          {['Upcoming', 'Done', 'Completed', 'Cancelled'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-6 py-2.5 rounded-xl font-black text-sm transition-all ${
-                activeTab === tab ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+        {/* Tabs - Scrollable on mobile */}
+        <div className="overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 mb-8">
+          <div className="flex gap-2 bg-slate-100/50 p-1.5 rounded-2xl w-max md:w-fit border border-slate-100">
+            {['Upcoming', 'Done', 'Completed', 'Cancelled'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 md:px-6 py-2.5 rounded-xl font-black text-xs md:text-sm transition-all whitespace-nowrap ${
+                  activeTab === tab ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Table/Cards */}
-        <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
-          <table className="w-full text-left border-collapse">
+        {/* Desktop Table / Mobile Card Switch */}
+        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+          
+          {/* Mobile Card View (Visible only on small screens) */}
+          <div className="block md:hidden divide-y divide-slate-50">
+            {filteredAppointments.length === 0 ? (
+                <div className="p-10 text-center">
+                  <AlertCircle className="mx-auto text-slate-200 mb-4" size={40} />
+                  <p className="text-slate-400 font-bold">No records found</p>
+                </div>
+            ) : (
+              filteredAppointments.map((apt) => (
+                <div key={apt._id} className="p-5 flex flex-col gap-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
+                        <User size={18} />
+                      </div>
+                      <div>
+                        <p className="font-black text-slate-800 leading-none mb-1">{apt.patientId?.username || 'Unknown'}</p>
+                        <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                          <Phone size={10} /> {apt.patientId?.phone || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-[9px] font-black tracking-widest border uppercase ${getStatusStyle(apt.status)}`}>
+                      {apt.status}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl">
+                    <div className="text-xs font-bold text-slate-600 flex items-center gap-2">
+                      <Calendar size={14} className="text-blue-500" />
+                      {new Date(apt.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <div className="flex gap-2">
+                        {apt.status === 'done' && (
+                          <button onClick={() => openBillingModal(apt._id)} className="p-2 bg-emerald-600 text-white rounded-lg shadow-md shadow-emerald-100">
+                            <Wallet size={16} />
+                          </button>
+                        )}
+                        {['pending', 'confirmed', 'upcoming'].includes(apt.status) && (
+                          <button onClick={() => onNoShow(apt._id)} className="p-2 text-red-500 bg-red-50 rounded-lg">
+                            <XCircle size={16} />
+                          </button>
+                        )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table View (Hidden on mobile) */}
+          <table className="hidden md:table w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-50">
                 <th className="p-6 text-xs font-black uppercase tracking-widest text-slate-400">Patient</th>
@@ -221,39 +267,39 @@ const ManagementDashboard = () => {
         </div>
       </div>
 
-      {/* --- Billing Modal --- */}
+      {/* --- Responsive Billing Modal --- */}
       {billingModal.isOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border border-white">
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
-              <Wallet size={32} />
+          <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] w-full max-w-md p-6 md:p-8 shadow-2xl border border-white mx-2">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
+              <Wallet size={28} />
             </div>
-            <h2 className="text-2xl font-black text-slate-900 mb-2">Patient Billing</h2>
-            <p className="text-slate-500 font-medium mb-6">Enter the final consultation fee to close this record.</p>
+            <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-2">Patient Billing</h2>
+            <p className="text-sm text-slate-500 font-medium mb-6">Enter the final consultation fee.</p>
             
             <div className="relative mb-8">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">EGP</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm">EGP</span>
               <input 
                 type="number"
                 value={billingModal.fee}
                 onChange={(e) => setBillingModal({...billingModal, fee: e.target.value})}
-                className="w-full pl-16 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xl font-black focus:ring-2 focus:ring-emerald-500/20 outline-none"
+                className="w-full pl-14 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-xl font-black focus:ring-2 focus:ring-emerald-500/20 outline-none"
                 autoFocus
               />
             </div>
 
-            <div className="flex gap-3">
-              <button 
-                onClick={submitBilling}
-                className="flex-1 bg-emerald-600 text-white py-4 rounded-2xl font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
-              >
-                <CheckCircle2 size={18} /> Complete Record
-              </button>
-              <button 
+            <div className="flex flex-col-reverse md:flex-row gap-3">
+               <button 
                 onClick={() => setBillingModal({ isOpen: false, id: null, fee: "500" })}
-                className="px-6 bg-slate-100 text-slate-500 rounded-2xl font-bold hover:bg-slate-200 transition-all"
+                className="w-full md:px-6 py-4 md:py-0 bg-slate-100 text-slate-500 rounded-2xl font-bold hover:bg-slate-200 transition-all"
               >
                 Cancel
+              </button>
+              <button 
+                onClick={submitBilling}
+                className="flex-[2] bg-emerald-600 text-white py-4 rounded-2xl font-black hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 size={18} /> Complete
               </button>
             </div>
           </div>

@@ -14,10 +14,10 @@ const ManagementLayout = () => {
   };
 
   const navItems = [
-    { path: '/admin/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-    { path: '/admin/patients', label: 'Patients', icon: <Users size={20} /> },
-    { path: '/admin/collection', label: 'Collection', icon: <CreditCard size={20} /> },
-    { path: '/admin/finance', label: 'Finance', icon: <DollarSign size={20} /> },
+    { path: '/management/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { path: '/management/patients', label: 'Patients', icon: <Users size={20} /> },
+    { path: '/management/collection', label: 'Collection', icon: <CreditCard size={20} /> },
+    { path: '/management/finance', label: 'Finance', icon: <DollarSign size={20} /> },
   ];
 
   return (
